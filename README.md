@@ -6,3 +6,5 @@
 -use ref hook
 setting up firebase
 signIn and SignUp authencation
+redux for state management
+update profile left

@@ -2,37 +2,59 @@
 import { useRef, useState } from "react";
 import Header from "./Header";
 import { CheckValidation } from "../utils/Validation";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "../utils/firebase";
+import { useNavigate } from "react-router-dom";
+import { addUser } from "../utils/userSlice";
+import { useDispatch } from "react-redux";
 
 const Login = () => {
+  const navigate=useNavigate();
+  const dispatch=useDispatch();
 
 
   const [isSignInForm, setSignInForm] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
 
-
+const name=useRef();
   const email = useRef();
   const password = useRef();
   const handleForm = (e) => {
     e.preventDefault();
     const message = CheckValidation(email.current.value, password.current.value);
+
+    console.log(name);
     setErrorMessage(message);
     if (message) return;
 
     if (!isSignInForm) {
       //SignUp Logic
-      createUserWithEmailAndPassword(auth, email.current.value, password.current.value)
+      createUserWithEmailAndPassword(auth, email.current.value, password.current.value,)
         .then((userCredential) => {
           // Signed up 
           const user = userCredential.user;
-          console.log(user);
-          // ...
+          // console.log(user);
+          updateProfile(user, {
+            displayName: name.current.value, photoURL: "https://play-lh.googleusercontent.com/1-hPxafOxdYpYZEOKzNIkSP43HXCNftVJVttoo4ucl7rsMASXW3Xr6GlXURCubE1tA=w3840-h2160-rw"
+          }).then(() => {
+            // Profile updated!
+            const {uid,email,displayName,photoURL} = auth.currentUser;
+          dispatch(addUser({uid:uid,email:email,displayName:displayName,photoURL:photoURL}));
+            navigate("/browse");
+            // ...
+          }).catch((error) => {
+            // An error occurred
+            // ...
+          });
+          
+          
+        
         })
         .catch((error) => {
           const errorCode = error.code;
           const errorMessage = error.message;
           setErrorMessage(errorCode + "-" + errorMessage);
+          
           // ..
         });
 
@@ -44,6 +66,7 @@ const Login = () => {
           // Signed in 
           const user = userCredential.user;
           console.log(user)
+          navigate("/browse");
           // ...
         })
         .catch((error) => {
@@ -70,7 +93,7 @@ const Login = () => {
       </div>
       <form className="absolute top-1/4 bg-black text-white w-3/12 mx-auto right-0 left-0 p-12 opacity-80 rounded-lg ">
         <h1 className="text-3xl font-bold m-2 mb-7">{isSignInForm ? "Sign In" : "Sign Up"}</h1>
-        {!isSignInForm && (<input type="text" placeholder="FullName" className="w-full p-2  m-2 bg-gray-700" />)}
+        {!isSignInForm && (<input ref={name} type="text" placeholder="FullName" className="w-full p-2  m-2 bg-gray-700" />)}
         <input ref={email} type="text" placeholder="Email Address" className="w-full p-2  m-2 bg-gray-700" />
         <input ref={password} type="password" placeholder="Password" className="w-full p-2 m-2 bg-gray-700" />
         <p className="p-2 m-2 font-bold text-red-600">{errorMessage}</p>
